@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", monospace;
+
+  --color-ink: #08090e;
+  --color-panel: #0d1017;
+  --color-panel2: #11151e;
+  --color-edge: rgba(255, 255, 255, 0.07);
+  --color-edge2: rgba(255, 255, 255, 0.12);
+  --color-accent: #a3e635; /* lime */
+  --color-ai: #a78bfa; /* violet */
+
+  --animate-fade-up: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-row-in: row-in 0.35s ease-out both;
+  --animate-blink-dot: blink-dot 1.2s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes row-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes blink-dot {
+    0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-2px); }
+  }
+}
+
+html,
+body {
+  height: 100%;
+  background: #08090e;
+}
+
+::selection {
+  background: rgba(163, 230, 53, 0.25);
+  color: #f4f4f5;
+}
+
+/* Slim, dark scrollbars */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #1f2530;
+  border-radius: 8px;
+  border: 2px solid #08090e;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #2c3442;
+}
+
+/* Subtle blueprint grid backdrop */
+.bg-blueprint {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Soft glow orbs for the empty state */
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  pointer-events: none;
+}
