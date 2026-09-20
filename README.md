@@ -246,6 +246,29 @@ npm run build
 npm run start
 ```
 
+### 🐳 Docker & Cloud Deployment
+
+#### Option 1: Docker
+Build and run the production container:
+
+```bash
+# Build the Docker image
+docker build -t hybrid-data-cleaning-platform .
+
+# Run container with environment variable
+docker run -p 3000:3000 -e DATABASE_URL="postgresql://user:pass@host:5432/db" hybrid-data-cleaning-platform
+```
+
+#### Option 2: Render
+Deploy automatically using `render.yaml`:
+1. Connect your GitHub repository to [Render](https://render.com/).
+2. Select **Blueprint** and Render will automatically detect `render.yaml`.
+3. Set your `DATABASE_URL` environment variable in the dashboard.
+
+#### Option 3: Railway / Vercel
+- **Railway**: Connect GitHub repository; Railway automatically detects the Dockerfile or Node.js runtime. Add Postgres plugin for instant database provisioning.
+- **Vercel**: Import repository on [Vercel](https://vercel.com/), add `DATABASE_URL`, and deploy.
+
 ---
 
 ## 📡 API Reference

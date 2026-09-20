@@ -28,17 +28,17 @@ async function callApi<T>(url: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
+const WELCOME_MESSAGE: ChatMessage = {
+  id: "welcome",
+  role: "assistant",
+  ts: 0,
+  content:
+    "Welcome to the co-pilot zone. Once a dataset lands on the left, I'll profile every column — nulls, duplicates, type mismatches, whitespace, casing — and hand you ranked, one-click fixes.\n\nTry the quick prompts below, or upload a CSV to watch me work.",
+};
+
 export default function Home() {
   const [payload, setPayload] = useState<DatasetPayload | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      ts: Date.now(),
-      content:
-        "Welcome to the co-pilot zone. Once a dataset lands on the left, I'll profile every column — nulls, duplicates, type mismatches, whitespace, casing — and hand you ranked, one-click fixes.\n\nTry the quick prompts below, or upload a CSV to watch me work.",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [selectedCol, setSelectedCol] = useState<string | null>(null);
   const [busyUpload, setBusyUpload] = useState(false);
   const [busyOp, setBusyOp] = useState(false);

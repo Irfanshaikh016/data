@@ -30,12 +30,9 @@ export function ColumnProfiler({ datasetId, column, refreshKey }: ColumnProfiler
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!column) {
-      setProfile(null);
-      setError(null);
-      return;
-    }
+    if (!column) return;
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
     fetch(`/api/datasets/${datasetId}/profile?column=${encodeURIComponent(column)}`)
