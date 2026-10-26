@@ -3,6 +3,7 @@
 
 import pl from "nodejs-polars";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import type { CellValue, ColumnProfile, Op, PreviewRow } from "@/lib/types";
 import { isNullToken } from "@/lib/csv-stream";
@@ -19,7 +20,9 @@ export const READ_OPTS = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
-export const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads");
+export const UPLOAD_DIR = process.env.VERCEL
+  ? path.join(os.tmpdir(), "data-uploads")
+  : path.join(process.cwd(), ".data", "uploads");
 export const PREVIEW_LIMIT = 100;
 const SAMPLE_LIMIT = 2000; // rows scanned in JS for pattern profiling
 
