@@ -1,10 +1,7 @@
-// POST /api/chat { datasetId?, message } → co-pilot reply + optional
-// one-click actions. The engine re-profiles the dataset so advice always
-// reflects the current state of the cleaning recipe.
-
 import { NextRequest, NextResponse } from "next/server";
 import { chatReply, contextFromPayload } from "@/lib/copilot";
 import { getSession, persistChat, resetAll, sessionPayload, undoToSnapshot } from "@/lib/store";
+import { askGemini } from "@/lib/gemini";
 import type { CopilotContext } from "@/lib/copilot";
 
 export const runtime = "nodejs";
@@ -26,36 +23,6 @@ export async function POST(req: NextRequest) {
   const session = body.datasetId ? await getSession(body.datasetId) : null;
   if (session) {
     const low = message.toLowerCase();
-
-    // Goal-aware answers (Task 4): the objective steers the advice.
-    if (session.goal && /\b(goal|objective|my (model|project)|aligned?|does this help)\b/.test(low)) {
-      const g = session.goal;
-      const guidance: Record<string, string> = {
-        classification:
-          "For classification: keep your target untouched (never impute labels), check class balance before removing anomalies — if the positive class IS the rare event, Isolation Forest will eat your signal — and scale features only after the train/test split.",
-        regression:
-          "For regression: watch leverage points (cap rather than drop), keep the target unscaled unless you inverse-transform predictions, and prefer KNN imputation so feature correlations survive.",
-        clustering:
-          "For clustering: scaling is mandatory (k-means is distance-based), high-cardinality categoricals need encoding before they mean anything, and outliers pull centroids hard — remove them deliberately.",
-        timeseries:
-          "For time series: don't dedupe blindly (repeated readings are legitimate), forward-fill instead of KNN to respect temporal order, and avoid row deletion — it creates gaps in the index.",
-        nlp: "For NLP: keep the raw text column intact, normalize case/whitespace only for metadata fields, and remember free text needs embeddings rather than tabular encoding.",
-        eda: "For reporting: prioritize readability — avoid scaling (it destroys interpretable units) and prefer explicit 'Unknown' categories over silent row deletion.",
-        unknown: "Tell me a bit more about the model you're building and I'll tighten these recommendations.",
-      };
-      const reply = `Your goal: "${g.raw}"\n${g.summary}\n\n${guidance[g.task] ?? guidance.unknown}\n\nRun “analyze my data” and I'll re-score every suggestion against this objective.`;
-      persistChat(body.datasetId ?? null, "user", message);
-      persistChat(body.datasetId ?? null, "assistant", reply, []);
-      return NextResponse.json({ reply, actions: [] });
-    }
-
-    if (/\b(deep learning|autoencoder|transformer|neural net|\bdl\b)\b/.test(low)) {
-      const reply =
-        "My policy is ML-first: KNN imputation, Isolation Forest and standard scaling handle normal tabular data, and they stay interpretable and cheap. I only raise the Deep Learning question when the data is genuinely complex — extreme dimensionality, unstructured free text/PII, or severe non-linear anomalies — and even then I never run it automatically. Hit “Analyze dataset” and I'll tell you which regime you're in.";
-      persistChat(body.datasetId ?? null, "user", message);
-      persistChat(body.datasetId ?? null, "assistant", reply, []);
-      return NextResponse.json({ reply, actions: [] });
-    }
 
     const wantsUndo = /\b(undo|revert|go back|take (that|it) back)\b/.test(low);
     const wantsReset = /\b(reset|start over|clear (the )?recipe|restore original)\b/.test(low);
@@ -83,8 +50,16 @@ export async function POST(req: NextRequest) {
     context = contextFromPayload(payload, session.recipe.length);
   }
 
-  const result = chatReply(message, context);
+  // 1. First attempt conversational response with Google Gemini
+  const geminiReply = await askGemini(message, context, session?.goal ?? null);
+
+  // 2. Compute deterministic Copilot suggestion actions & fallback reply
+  const copilotResult = chatReply(message, context);
+
+  const finalReply = geminiReply || copilotResult.reply;
+  const actions = copilotResult.actions;
+
   persistChat(body.datasetId ?? null, "user", message);
-  persistChat(body.datasetId ?? null, "assistant", result.reply, result.actions);
-  return NextResponse.json(result);
+  persistChat(body.datasetId ?? null, "assistant", finalReply, actions);
+  return NextResponse.json({ reply: finalReply, actions });
 }
